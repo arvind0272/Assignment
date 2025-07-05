@@ -20,7 +20,16 @@ pipeline {
 
         stage('Run Docker Container') {
             steps {
-                bat 'docker run -d -p 8080:80 %IMAGE_NAME%'
+                // Optional: Stop any running container on port 8090
+                // Uncomment if needed
+                /*
+                bat '''
+                    FOR /F "tokens=*" %%i IN ('docker ps -q --filter "publish=8090"') DO docker stop %%i
+                '''
+                */
+
+                // Use port 8090 instead of 8080 to avoid conflicts
+                bat 'docker run -d -p 8090:80 %IMAGE_NAME%'
             }
         }
 
@@ -37,15 +46,14 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                echo 'Test stage - No automated tests configured.'
+                echo 'Test stage - no tests configured yet.'
             }
         }
 
         stage('Success Message') {
             steps {
-                echo '✅ CI/CD pipeline completed successfully!'
+                echo '✅ CI/CD pipeline executed successfully!'
             }
         }
     }
 }
-
