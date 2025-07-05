@@ -3,6 +3,9 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'arvindbhatia123/hello-world-app'
+        CONTAINER_NAME = 'hello-world-container'
+        HOST_PORT = '8091'
+        CONTAINER_PORT = '80'
     }
 
     stages {
@@ -26,10 +29,19 @@ pipeline {
             }
         }
 
+        stage('Clean Up Existing Container') {
+            steps {
+                // Stops and removes existing container if running
+                bat """
+                docker stop %CONTAINER_NAME% || exit 0
+                docker rm %CONTAINER_NAME% || exit 0
+                """
+            }
+        }
+
         stage('Run Docker Container') {
             steps {
-                // You can change 8090 if port is in use
-                bat "docker run -d -p 8090:80 %IMAGE_NAME%"
+                bat "docker run -d -p %HOST_PORT%:%CONTAINER_PORT% --name %CONTAINER_NAME% %IMAGE_NAME%"
             }
         }
 
@@ -43,21 +55,24 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                echo 'Running tests...'
-                // Add actual test commands if needed
+                echo 'Running tests (placeholder)...'
+                // Insert test scripts or curl healthcheck here
             }
         }
 
         stage('Success Message') {
             steps {
-                echo 'Docker image built, pushed, and container running successfully!'
+                echo "✅ Deployment successful. App is running at http://localhost:%HOST_PORT%"
             }
         }
     }
 
     post {
         failure {
-            echo 'Pipeline failed!'
+            echo "❌ Pipeline failed. Check logs above."
+        }
+        always {
+            echo "📝 Pipeline execution complete."
         }
     }
 }
