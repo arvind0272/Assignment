@@ -12,48 +12,52 @@ pipeline {
             }
         }
 
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %IMAGE_NAME% .'
+                bat "docker build -t %IMAGE_NAME% ."
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                // Optional: Stop any running container on port 8090
-                // Uncomment if needed
-                /*
-                bat '''
-                    FOR /F "tokens=*" %%i IN ('docker ps -q --filter "publish=8090"') DO docker stop %%i
-                '''
-                */
-
-                // Use port 8090 instead of 8080 to avoid conflicts
-                bat 'docker run -d -p 8090:80 %IMAGE_NAME%'
+                // You can change 8090 if port is in use
+                bat "docker run -d -p 8090:80 %IMAGE_NAME%"
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat '''
-                        echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                        docker push %IMAGE_NAME%
-                    '''
+                    bat 'docker push %IMAGE_NAME%'
                 }
             }
         }
 
         stage('Run Tests') {
             steps {
-                echo 'Test stage - no tests configured yet.'
+                echo 'Running tests...'
+                // Add actual test commands if needed
             }
         }
 
         stage('Success Message') {
             steps {
-                echo '✅ CI/CD pipeline executed successfully!'
+                echo 'Docker image built, pushed, and container running successfully!'
             }
+        }
+    }
+
+    post {
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
